@@ -1,14 +1,17 @@
+"use client";
+
 import React, { useRef, useEffect, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 import * as turf from "@turf/turf";
 import axios from "axios";
-import geoJson from "/src/assets/nps.json";
-mapboxgl.accessToken = import.meta.env.VITE_MAP_BOX_KEY;
+import geoJson from "../assets/nps.json";
+mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAP_BOX_KEY;
 
-import GetNPS from "/src/api/GetNPS";
-import flyToLocation from "/src/utils/flyToLocation";
+import GetNPS from "../api/GetNPS";
+import GetIP from "../api/GetIP";
+import flyToLocation from "../utils/flyToLocation";
 
 import LocationButtons from "./LocationButtons";
 import LocationPopup from "./LocationPopup";
@@ -22,7 +25,7 @@ const Map = () => {
   const [lat, setLat] = useState(39);
   const [zoom, setZoom] = useState(2.5);
   const [pitch, setPitch] = useState(0);
-  const [searchRadius] = useState('350');
+  const [searchRadius] = useState("350");
   const [geoMap, setGeoMap] = useState(geoJson.features);
   const [geoMapItem, setGeoMapItem] = useState({ data: [] });
   const [selectedItem, setSelectedItem] = useState(null);
@@ -30,39 +33,29 @@ const Map = () => {
   const [showSidebar, setShowSidebar] = useState(false);
   const [locationPopUp, setLocationPopUp] = useState(false);
 
+  if (!process.env.NEXT_PUBLIC_MAP_BOX_KEY) {
+    return <div>Mapbox key not found</div>;
+  }
+
   GetNPS(selectedItem, setGeoMapItem, setIsLoading);
 
   //fetch data to find the users IP and then center and zoom the map to that area
   useEffect(() => {
-    const fetchIP = async () => {
-      try {
-        const { data } = await axios.get(
-          `https://api.ipdata.co?api-key=${import.meta.env.VITE_IPDATA_KEY}`,
-          {
-            headers: {
-              Accept: "application/json",
-            },
-          }
-        );
-        setLng(data.longitude);
-        setLat(data.latitude);
-      } catch (err) {
-        console.log(err.message);
-      } finally {
-        //if we successfully get the user's IP we fly to that location
-        map.current.flyTo({
-          center: [lng, lat],
-          zoom: 5,
-          duration: 3000,
-          essential: true,
-        });
-        sortItems({
-          coordinates: [lng, lat],
-        }, false);
-      }
-    };
+    GetIP(setLng, setLat);
 
-    fetchIP();
+    //if we successfully get the user's IP we fly to that location
+    map.current.flyTo({
+      center: [lng, lat],
+      zoom: 5,
+      duration: 3000,
+      essential: true,
+    });
+    sortItems(
+      {
+        coordinates: [lng, lat],
+      },
+      false
+    );
   }, [lng, lat]);
 
   //Load map, add locations and set onClick
@@ -74,7 +67,7 @@ const Map = () => {
       center: [lng, lat],
       zoom: zoom,
       pitch: pitch,
-      cooperativeGestures: true
+      cooperativeGestures: true,
     });
 
     map.current.on("load", function () {
@@ -198,7 +191,7 @@ const Map = () => {
       sortItems({
         coordinates: [event.coords.longitude, event.coords.latitude],
       });
-      setShowSidebar(true)
+      setShowSidebar(true);
     });
 
     /*
@@ -226,10 +219,9 @@ const Map = () => {
     //after users searches and clicks on a result
     geocoder.on("result", (event) => {
       //sort items from nearest to farthest distance from search location
-      sortItems(event.result.geometry)
-      setShowSidebar(true)
+      sortItems(event.result.geometry);
+      setShowSidebar(true);
     });
-
   });
 
   const createPopUp = (currentItem) => {
@@ -248,7 +240,7 @@ const Map = () => {
   };
 
   //only used if we show the full list of locations
-  const sortItems = (searchResult, showPopup=true) => {
+  const sortItems = (searchResult, showPopup = true) => {
     const sortedGeoMap = [...geoMap];
     const options = { units: "miles" };
     //add the distance to the array
@@ -294,7 +286,7 @@ const Map = () => {
 
   return (
     <>
-      <div className="flex flex-wrap md:flex-nowrap overflow-hidden md:h-[70vh] relative">
+      <div className='flex flex-wrap md:flex-nowrap overflow-hidden md:h-[70vh] relative'>
         <LocationButtons
           map={map}
           geoMap={geoMap}
@@ -305,7 +297,10 @@ const Map = () => {
           setShowSidebar={setShowSidebar}
           searchRadius={searchRadius}
         />
-        <section ref={mapContainer} className="w-full h-[70vh] md:h-full grow" />
+        <section
+          ref={mapContainer}
+          className='w-full h-[70vh] md:h-full grow'
+        />
       </div>
       <div ref={popUpElement}>
         <LocationPopup
