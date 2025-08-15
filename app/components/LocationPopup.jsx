@@ -1,27 +1,24 @@
 "use client";
 
-const LocationPopup = ({ geoMapItem, isLoading, setLocationPopUp }) => (
-  <>
-    {isLoading && <p className='loading'>Loading...</p>}
-    {!isLoading &&
-      geoMapItem.data.map((park) => (
-        <div key={park.id} className='mt-3 text-zinc-900'>
-          <p className='text-xs font-bold'>{park.fullName}</p>
-          <p className='mt-2 text-xs'>
-            {park.addresses[0].line1}
-            <br></br>
-            {park.addresses[0].city}, {park.addresses[0].stateCode}{" "}
-            {park.addresses[0].postalCode}
-          </p>
+export default function LocationPopup({ selectedItem, geoMap }) {
+  let mapItem = null;
+  if (selectedItem) {
+    const item = geoMap.find((item) => item.properties.Code === selectedItem);
+    mapItem = item;
+  }
+  return (
+    <>
+      {mapItem && (
+        <div key={mapItem.id} className='mt-3 text-zinc-900'>
+          <p className='text-xs font-bold'>{mapItem?.properties?.Name}</p>
           <button
             className='mt-3 text-sm btn'
-            onClick={() => setLocationPopUp(true)}
+            onClick={() => console.log(mapItem?.properties?.Code)}
           >
             View
           </button>
         </div>
-      ))}
-  </>
-);
-
-export default LocationPopup;
+      )}
+    </>
+  );
+}

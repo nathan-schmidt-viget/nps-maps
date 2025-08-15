@@ -3,7 +3,9 @@
 import React, { useRef, useEffect, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
+import "mapbox-gl/dist/mapbox-gl.css";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
+
 import * as turf from "@turf/turf";
 import geoJson from "../assets/nps.json";
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAP_BOX_KEY;
@@ -40,8 +42,13 @@ const Map = () => {
   };
 
   useEffect(() => {
-    getNPS(selectedItem);
-    console.log(selectedItem);
+    //getNPS(selectedItem);
+    if (selectedItem) {
+      const foundItem = geoMap.find(
+        (item) => item.properties.Code === selectedItem
+      );
+      setGeoMapItem(foundItem);
+    }
   }, [selectedItem]);
 
   //fetch data to find the users IP and then center and zoom the map to that area
@@ -307,18 +314,14 @@ const Map = () => {
         />
       </div>
       <div ref={popUpElement}>
-        <LocationPopup
-          geoMapItem={geoMapItem}
-          isLoading={isLoading}
-          setLocationPopUp={setLocationPopUp}
-        />
+        <LocationPopup selectedItem={selectedItem} geoMap={geoMap} />
       </div>
-      <LocationDetails
+      {/* <LocationDetails
         geoMapItem={geoMapItem}
         isLoading={isLoading}
         setLocationPopUp={setLocationPopUp}
         locationPopUp={locationPopUp}
-      />
+      /> */}
     </>
   );
 };
