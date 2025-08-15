@@ -5,14 +5,10 @@ import mapboxgl from "mapbox-gl";
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 import * as turf from "@turf/turf";
-import axios from "axios";
 import geoJson from "../assets/nps.json";
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAP_BOX_KEY;
 
-import GetNPS from "../api/GetNPS";
-import GetIP from "../api/GetIP";
 import flyToLocation from "../utils/flyToLocation";
-
 import LocationButtons from "./LocationButtons";
 import LocationPopup from "./LocationPopup";
 import LocationDetails from "./LocationDetails";
@@ -33,29 +29,37 @@ const Map = () => {
   const [showSidebar, setShowSidebar] = useState(false);
   const [locationPopUp, setLocationPopUp] = useState(false);
 
-  if (!process.env.NEXT_PUBLIC_MAP_BOX_KEY) {
-    return <div>Mapbox key not found</div>;
-  }
+  const getNPS = async (selectedItem) => {
+    const response = await fetch("/api/nps", {
+      method: "POST",
+      body: JSON.stringify({ selectedItem }),
+    });
+    const data = await response.json();
+    setGeoMapItem(data);
+    console.log(data);
+  };
 
-  GetNPS(selectedItem, setGeoMapItem, setIsLoading);
+  useEffect(() => {
+    getNPS(selectedItem);
+    console.log(selectedItem);
+  }, [selectedItem]);
 
   //fetch data to find the users IP and then center and zoom the map to that area
   useEffect(() => {
-    GetIP(setLng, setLat);
-
-    //if we successfully get the user's IP we fly to that location
-    map.current.flyTo({
-      center: [lng, lat],
-      zoom: 5,
-      duration: 3000,
-      essential: true,
-    });
-    sortItems(
-      {
-        coordinates: [lng, lat],
-      },
-      false
-    );
+    // GetIP(setLng, setLat);
+    // //if we successfully get the user's IP we fly to that location
+    // map.current.flyTo({
+    //   center: [lng, lat],
+    //   zoom: 5,
+    //   duration: 3000,
+    //   essential: true,
+    // });
+    // sortItems(
+    //   {
+    //     coordinates: [lng, lat],
+    //   },
+    //   false
+    // );
   }, [lng, lat]);
 
   //Load map, add locations and set onClick
