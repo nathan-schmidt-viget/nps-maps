@@ -5,7 +5,6 @@ import mapboxgl from "mapbox-gl";
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
-
 import * as turf from "@turf/turf";
 import geoJson from "../assets/nps.json";
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAP_BOX_KEY;
@@ -13,7 +12,7 @@ mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAP_BOX_KEY;
 import flyToLocation from "../utils/flyToLocation";
 import LocationButtons from "./LocationButtons";
 import LocationPopup from "./LocationPopup";
-import LocationDetails from "./LocationDetails";
+import { sortItems } from "../utils/helpers";
 
 const Map = () => {
   const mapContainer = useRef(null);
@@ -31,42 +30,31 @@ const Map = () => {
   const [showSidebar, setShowSidebar] = useState(false);
   const [locationPopUp, setLocationPopUp] = useState(false);
 
-  const getNPS = async (selectedItem) => {
-    const response = await fetch("/api/nps", {
-      method: "POST",
-      body: JSON.stringify({ selectedItem }),
-    });
-    const data = await response.json();
-    setGeoMapItem(data);
-    console.log(data);
-  };
-
-  useEffect(() => {
-    //getNPS(selectedItem);
-    if (selectedItem) {
-      const foundItem = geoMap.find(
-        (item) => item.properties.Code === selectedItem
-      );
-      setGeoMapItem(foundItem);
-    }
-  }, [selectedItem]);
-
   //fetch data to find the users IP and then center and zoom the map to that area
+  const getIP = async () => {
+    const response = await fetch("/api/getip");
+    const data = await response.json();
+    setLng(data.longitude);
+    setLat(data.latitude);
+  };
+  //getIP();
+
+  //center and zoom the map to the users IP
   useEffect(() => {
-    // GetIP(setLng, setLat);
-    // //if we successfully get the user's IP we fly to that location
-    // map.current.flyTo({
-    //   center: [lng, lat],
-    //   zoom: 5,
-    //   duration: 3000,
-    //   essential: true,
-    // });
-    // sortItems(
-    //   {
-    //     coordinates: [lng, lat],
-    //   },
-    //   false
-    // );
+    if (!map.current) return; // Don't try to fly if map isn't initialized yet
+
+    map.current.flyTo({
+      center: [lng, lat],
+      zoom: 5,
+      duration: 3000,
+      essential: true,
+    });
+    filterMap(
+      {
+        coordinates: [lng, lat],
+      },
+      false
+    );
   }, [lng, lat]);
 
   //Load map, add locations and set onClick
@@ -199,7 +187,7 @@ const Map = () => {
     const geolocate = new mapboxgl.GeolocateControl();
     map.current.addControl(geolocate);
     geolocate.on("geolocate", (event) => {
-      sortItems({
+      filterMap({
         coordinates: [event.coords.longitude, event.coords.latitude],
       });
       setShowSidebar(true);
@@ -230,7 +218,7 @@ const Map = () => {
     //after users searches and clicks on a result
     geocoder.on("result", (event) => {
       //sort items from nearest to farthest distance from search location
-      sortItems(event.result.geometry);
+      filterMap(event.result.geometry);
       setShowSidebar(true);
     });
   });
@@ -251,29 +239,8 @@ const Map = () => {
   };
 
   //only used if we show the full list of locations
-  const sortItems = (searchResult, showPopup = true) => {
-    const sortedGeoMap = [...geoMap];
-    const options = { units: "miles" };
-    //add the distance to the array
-    sortedGeoMap.forEach((item) => {
-      item.properties.distance = turf.distance(
-        searchResult.coordinates,
-        item.geometry.coordinates,
-        options
-      );
-      item.show = item.properties.distance > searchRadius ? false : true;
-    });
-
-    //sort the array by the distance
-    sortedGeoMap.sort((a, b) => {
-      if (a.properties.distance > b.properties.distance) {
-        return 1;
-      }
-      if (a.properties.distance < b.properties.distance) {
-        return -1;
-      }
-      return 0; // a must be equal to b
-    });
+  const filterMap = (searchResult, showPopup = true) => {
+    const sortedGeoMap = sortItems(searchResult, showPopup);
 
     //set the sorted array to the geoMap
     setGeoMap(sortedGeoMap);
@@ -314,14 +281,8 @@ const Map = () => {
         />
       </div>
       <div ref={popUpElement}>
-        <LocationPopup selectedItem={selectedItem} geoMap={geoMap} />
+        <LocationPopup selectedItem={selectedItem} />
       </div>
-      {/* <LocationDetails
-        geoMapItem={geoMapItem}
-        isLoading={isLoading}
-        setLocationPopUp={setLocationPopUp}
-        locationPopUp={locationPopUp}
-      /> */}
     </>
   );
 };
