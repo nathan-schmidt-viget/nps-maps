@@ -1,24 +1,29 @@
 "use client";
 
-export default function LocationPopup({ selectedItem, geoMap }) {
+import Link from "next/link";
+import { getLocalNPSbyCode } from "../utils/helpers";
+
+export default function LocationPopup({ selectedItem }) {
   let mapItem = null;
   if (selectedItem) {
-    const item = geoMap.find((item) => item.properties.Code === selectedItem);
+    const item = getLocalNPSbyCode(selectedItem);
     mapItem = item;
   }
+  if (!mapItem) {
+    return null;
+  }
   return (
-    <>
-      {mapItem && (
-        <div key={mapItem.id} className='mt-3 text-zinc-900'>
-          <p className='text-xs font-bold'>{mapItem?.properties?.Name}</p>
-          <button
-            className='mt-3 text-sm btn'
-            onClick={() => console.log(mapItem?.properties?.Code)}
-          >
-            View
-          </button>
-        </div>
-      )}
-    </>
+    <div className='mt-3 text-zinc-900'>
+      <p className='text-xs font-bold'>{mapItem?.properties?.Name}</p>
+
+      <Link
+        href={`/park/${mapItem?.properties?.Name?.toLowerCase()
+          .replace(/\s+/g, "-")
+          .replace(/[^a-z0-9-]/g, "")}`}
+        className='mt-3 text-sm btn'
+      >
+        View
+      </Link>
+    </div>
   );
 }
