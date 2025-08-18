@@ -1,24 +1,24 @@
 import geoJson from "../assets/nps.json";
 import * as turf from "@turf/turf";
 
-export function getLocalNPSbyCode(selectedItem) {
+export function getLocalNPSbyCode(selectedItem: string) {
   const item = geoJson.features.find(
     (item) => item.properties.Code === selectedItem
   );
   return item;
 }
 
-export function getLocalNPSbyName(selectedItem) {
+export function getLocalNPSbyName(selectedItem: string) {
   const item = geoJson.features.find(
     (item) =>
       item.properties.Name.toLowerCase()
         .replace(/\s+/g, "-")
         .replace(/[^a-z0-9-]/g, "") === selectedItem.toLowerCase()
   );
-  return item.properties.Code;
+  return item?.properties.Code;
 }
 
-export function formatPhoneNumber(phoneNumberString) {
+export function formatPhoneNumber(phoneNumberString: string) {
   const cleaned = ("" + phoneNumberString).replace(/\D/g, "");
   const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
   if (match) {
@@ -27,11 +27,15 @@ export function formatPhoneNumber(phoneNumberString) {
   return null;
 }
 
-export function sortItems(searchResult, showPopup = true) {
+export function sortItems(
+  searchResult: { coordinates: number[] },
+  showPopup = true,
+  searchRadius = "350"
+) {
   const sortedGeoMap = [...geoJson.features];
-  const options = { units: "miles" };
+  const options = { units: "miles" as const };
   //add the distance to the array
-  sortedGeoMap.forEach((item) => {
+  sortedGeoMap.forEach((item: any) => {
     item.properties.distance = turf.distance(
       searchResult.coordinates,
       item.geometry.coordinates,
@@ -41,7 +45,7 @@ export function sortItems(searchResult, showPopup = true) {
   });
 
   //sort the array by the distance
-  sortedGeoMap.sort((a, b) => {
+  sortedGeoMap.sort((a: any, b: any) => {
     if (a.properties.distance > b.properties.distance) {
       return 1;
     }
@@ -53,20 +57,14 @@ export function sortItems(searchResult, showPopup = true) {
 
   //set the sorted array to the geoMap
   return sortedGeoMap;
+}
 
-  // //fit map zoom to the search location and closest location - https://turfjs.org/docs/#bbox
-  // if (showPopup) {
-  //   map.current.fitBounds(
-  //     turf.bbox(
-  //       turf.lineString([
-  //         sortedGeoMap[0].geometry.coordinates,
-  //         searchResult.coordinates,
-  //       ])
-  //     ),
-  //     { padding: 100 }
-  //   );
-
-  //   // //open popup box for the closest location
-  //   createPopUp(sortedGeoMap[0]);
-  // }
+export function flyToLocation(map: any, currentItem: any) {
+  map.current.flyTo({
+    center: currentItem.geometry.coordinates,
+    zoom: 8.5,
+    duration: 3000,
+    essential: true, // This animation is considered essential with
+    //respect to prefers-reduced-motion
+  });
 }

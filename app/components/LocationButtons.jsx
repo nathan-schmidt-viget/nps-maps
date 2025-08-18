@@ -57,7 +57,7 @@ const LocationButtons = ({
         </div>
         {geoMap.map((item) => (
           <button
-            className={`btn items-center flex-row gap-2 w-full ${
+            className={`btn items-center flex-row gap-2 w-full  ${
               (selectedItem == item.properties.Code && "active",
               item.show ? "flex" : "hidden")
             }`}

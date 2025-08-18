@@ -27,7 +27,7 @@ const LocationDetails = ({
   };
 
   return (
-    <dialog
+    <section
       ref={locationDetailsPopUp}
       className='relative mx-auto w-full max-w-6xl rounded-md basis-1/2 bg-zinc-100 backdrop:bg-zinc-900 backdrop:opacity-70'
     >
@@ -153,7 +153,7 @@ const LocationDetails = ({
             </div>
           </div>
         ))}
-    </dialog>
+    </section>
   );
 };
 

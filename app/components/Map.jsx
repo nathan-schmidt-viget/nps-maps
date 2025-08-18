@@ -9,10 +9,9 @@ import * as turf from "@turf/turf";
 import geoJson from "../assets/nps.json";
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAP_BOX_KEY;
 
-import flyToLocation from "../utils/flyToLocation";
 import LocationButtons from "./LocationButtons";
 import LocationPopup from "./LocationPopup";
-import { sortItems } from "../utils/helpers";
+import { sortItems, flyToLocation } from "../utils/helpers";
 
 const Map = () => {
   const mapContainer = useRef(null);
@@ -240,7 +239,7 @@ const Map = () => {
 
   //only used if we show the full list of locations
   const filterMap = (searchResult, showPopup = true) => {
-    const sortedGeoMap = sortItems(searchResult, showPopup);
+    const sortedGeoMap = sortItems(searchResult, showPopup, searchRadius);
 
     //set the sorted array to the geoMap
     setGeoMap(sortedGeoMap);
@@ -257,7 +256,7 @@ const Map = () => {
         { padding: 100 }
       );
 
-      // //open popup box for the closest location
+      // open popup box for the closest location
       createPopUp(sortedGeoMap[0]);
     }
   };
