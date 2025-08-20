@@ -225,10 +225,7 @@ const Map = () => {
   const createPopUp = (currentItem) => {
     setSelectedItem(currentItem.properties.Code);
 
-    const popUps = document.getElementsByClassName("mapboxgl-popup");
     const coordinates = currentItem.geometry.coordinates.slice();
-    // Check if there is already a popup on the map and if so, remove it
-    if (popUps[0]) popUps[0].remove();
 
     //mapbox popup offset to center on custom marker - https://docs.mapbox.com/mapbox-gl-js/api/markers/#popup
     const popup = new mapboxgl.Popup({ offset: [0, -10] })
