@@ -38,7 +38,7 @@ export async function GET(): Promise<NextResponse> {
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
-    const { selectedItem } = await request.json();
+    const { type, limit, selectedItem } = await request.json();
 
     // Check if NPS token is available
     if (!process.env.NPS_KEY) {
@@ -49,9 +49,13 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
+    if (!type) {
+      return NextResponse.json({ error: "Type is required" }, { status: 400 });
+    }
+
     // Fetch specific park data from NPS API
     const response = await fetch(
-      `https://developer.nps.gov/api/v1/parks?parkCode=${selectedItem}&limit=1&api_key=${process.env.NPS_KEY}`,
+      `https://developer.nps.gov/api/v1/${type}?parkCode=${selectedItem}&limit=${limit}&api_key=${process.env.NPS_KEY}`,
       {
         headers: {
           Accept: "application/json",
