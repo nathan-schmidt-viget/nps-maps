@@ -4,6 +4,10 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLocalNPSbyName, formatPhoneNumber } from "../../utils/helpers";
+import AlertData from "../../components/AlertData";
+import EventsData from "../../components/EventsData";
+import ThingsToDoData from "../../components/ThingsToDoData";
+import DataSkeleton from "../../components/DataSkeleton";
 
 export default function ParkPage({
   params,
@@ -11,11 +15,8 @@ export default function ParkPage({
   params: Promise<{ slug: string }>;
 }) {
   const parkId = getLocalNPSbyName(use(params).slug);
-  const [parkData, setParkData] = useState<any>(null);
+  const [parkData, setParkData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [alertData, setAlertData] = useState<any>(null);
-  const [eventsData, setEventsData] = useState<any>(null);
-  const [thingsToDoData, setThingsToDoData] = useState<any>(null);
 
   const getNPS = async (type: string, limit: number, parkId: string) => {
     try {
@@ -40,14 +41,7 @@ export default function ParkPage({
     const fetchData = async () => {
       if (parkId) {
         const parks = await getNPS("parks", 1, parkId);
-        const alerts = await getNPS("alerts", 10, parkId);
-        const events = await getNPS("events", 50, parkId);
-        const thingsToDo = await getNPS("thingstodo", 4, parkId);
-
         setParkData(parks);
-        setAlertData(alerts);
-        setEventsData(events);
-        setThingsToDoData(thingsToDo);
       }
     };
 
@@ -60,12 +54,74 @@ export default function ParkPage({
 
   if (loading) {
     return (
-      <div className='flex justify-center items-center min-h-screen bg-stone-50'>
-        <div className='text-center'>
-          <div className='mx-auto mb-4 w-12 h-12 rounded-full border-b-2 border-amber-700 animate-spin'></div>
-          <p className='font-serif text-stone-600'>
-            Loading park information...
-          </p>
+      <div className='min-h-screen bg-stone-50'>
+        {/* Breadcrumb Navigation */}
+        <nav className='bg-white border-b border-stone-100'>
+          <div className='px-4 mx-auto max-w-7xl sm:px-6 lg:px-8'>
+            <div className='flex items-center py-4 space-x-2'>
+              <Link
+                href='/'
+                className='font-medium text-amber-700 transition-colors duration-200 hover:text-amber-800'
+              >
+                Map
+              </Link>
+              <span className='text-stone-400'>/</span>
+              <span className='font-medium text-stone-600'>Park</span>
+            </div>
+          </div>
+        </nav>
+
+        <div className='px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8'>
+          <div className='grid grid-cols-1 gap-8 lg:grid-cols-3'>
+            {/* Main Content */}
+            <div className='space-y-8 lg:col-span-2'>
+              {/* Park Header Skeleton */}
+              <div className='p-6 bg-white rounded-lg border border-stone-100'>
+                <div className='mb-4 w-3/4 h-12 rounded animate-pulse bg-stone-200'></div>
+                <div className='space-y-2'>
+                  <div className='w-full h-4 rounded animate-pulse bg-stone-200'></div>
+                  <div className='w-5/6 h-4 rounded animate-pulse bg-stone-200'></div>
+                  <div className='w-4/6 h-4 rounded animate-pulse bg-stone-200'></div>
+                </div>
+              </div>
+
+              {/* Things To Do Skeleton */}
+              <DataSkeleton title='Things To Do' variant='grid' itemCount={4} />
+
+              {/* Gallery Skeleton */}
+              <DataSkeleton title='Gallery' variant='grid' itemCount={6} />
+
+              {/* Events Skeleton */}
+              <DataSkeleton title='Events' variant='cards' itemCount={4} />
+            </div>
+
+            {/* Sidebar */}
+            <aside className='space-y-6'>
+              {/* Operating Hours Skeleton */}
+              <DataSkeleton
+                title='Operating Hours'
+                variant='list'
+                itemCount={7}
+              />
+
+              {/* Alerts Skeleton */}
+              <DataSkeleton title='Alerts' variant='list' itemCount={3} />
+
+              {/* Weather Info Skeleton */}
+              <DataSkeleton
+                title='Weather Information'
+                variant='cards'
+                itemCount={1}
+              />
+
+              {/* Contact Information Skeleton */}
+              <DataSkeleton
+                title='Contact Information'
+                variant='list'
+                itemCount={4}
+              />
+            </aside>
+          </div>
         </div>
       </div>
     );
@@ -91,7 +147,7 @@ export default function ParkPage({
         </div>
       </nav>
 
-      {parkData?.data?.map((location: any, index: any) => (
+      {parkData?.data?.map((location, index) => (
         <div
           key={index}
           className='px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8'
@@ -110,41 +166,7 @@ export default function ParkPage({
               </div>
 
               {/* Things To Do */}
-              <div className='p-6 bg-white rounded-lg border border-stone-100'>
-                <h2 className='mb-6 font-serif text-2xl text-stone-800'>
-                  Things To Do
-                </h2>
-                <div className='grid grid-cols-1 gap-2 md:grid-cols-2'>
-                  {thingsToDoData?.data?.map((thing: any, index: number) => (
-                    <a
-                      href={thing.url}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      key={index}
-                      className='flex flex-col gap-2 items-start mb-2 rounded-lg group text-stone-600 bg-stone-100'
-                    >
-                      <div className='overflow-hidden w-full rounded-t-lg aspect-video'>
-                        <img
-                          src={thing.images[0].url}
-                          alt={thing.images[0].altText}
-                          className='object-cover w-full h-auto'
-                        />
-                      </div>
-                      <div className='flex flex-col gap-1 p-4'>
-                        <h3 className='font-medium text-stone-800'>
-                          {thing.title}
-                        </h3>
-                        <p className='text-sm text-stone-600'>
-                          {thing.shortDescription}
-                        </p>
-                        <span className='inline-block mt-auto text-amber-700 underline transition-colors duration-200 group-hover:text-amber-800'>
-                          Learn More
-                        </span>
-                      </div>
-                    </a>
-                  ))}
-                </div>
-              </div>
+              <ThingsToDoData parkId={parkId} />
 
               {/* Image Gallery - Masonry Style */}
               <div className='p-6 bg-white rounded-lg border border-stone-100'>
@@ -207,24 +229,7 @@ export default function ParkPage({
               )}
 
               {/* Events */}
-              <div className='p-6 bg-white rounded-lg border border-stone-100'>
-                <h2 className='mb-4 font-serif text-2xl text-stone-800'>
-                  Events
-                </h2>
-                <div className='space-y-4'>
-                  {eventsData?.data?.map((event: any, index: number) => (
-                    <div key={index}>
-                      <h3 className='font-medium text-stone-800'>
-                        {event.title}
-                      </h3>
-                      <div
-                        className='text-stone-600'
-                        dangerouslySetInnerHTML={{ __html: event.description }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <EventsData parkId={parkId} />
             </div>
 
             {/* Sidebar */}
@@ -257,43 +262,7 @@ export default function ParkPage({
               </div>
 
               {/* Alerts */}
-              {alertData?.data.length > 0 && (
-                <div className='p-6 bg-white rounded-lg border border-stone-100'>
-                  <h3 className='mb-4 font-serif text-2xl text-stone-800'>
-                    Alerts
-                  </h3>
-                  <div className='space-y-4'>
-                    {alertData?.data.map((alert: any, index: number) => (
-                      <div key={index}>
-                        <div className='flex flex-col gap-3 items-start mb-2'>
-                          <div className='flex flex-col items-start mt-0.5 gap-1'>
-                            <h4 className='font-medium text-stone-800'>
-                              {alert.title}
-                            </h4>
-                            <span
-                              className={`inline-block px-2 py-1 mt-1 text-xs font-medium rounded ${
-                                alert.category === "Danger" ||
-                                alert.category === "Park Closure"
-                                  ? "bg-red-600 text-white"
-                                  : alert.category === "Caution"
-                                  ? "bg-yellow-600 text-white"
-                                  : alert.category === "Information"
-                                  ? "bg-blue-600 text-white"
-                                  : "bg-amber-600 text-white"
-                              }`}
-                            >
-                              {alert.category}
-                            </span>
-                          </div>
-                          <div className='text-sm text-stone-600'>
-                            {alert.description}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <AlertData parkId={parkId} />
 
               {/* Weather Info */}
               <div className='p-6 bg-white rounded-lg border border-stone-100'>
