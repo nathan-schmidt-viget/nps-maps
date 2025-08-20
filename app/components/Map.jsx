@@ -91,11 +91,11 @@ const Map = () => {
           "circle-color": [
             "step",
             ["get", "point_count"],
-            "#024870",
+            "#92400e", // amber-800
             20,
-            "#046ba7",
+            "#b45309", // amber-700
             100,
-            "#028edd",
+            "#d97706", // amber-600
           ],
           "circle-radius": [
             "step",
@@ -116,8 +116,8 @@ const Map = () => {
         type: "circle",
         paint: {
           "circle-radius": 7,
-          "circle-color": "#046ba7",
-          "circle-stroke-width": 1,
+          "circle-color": "#b45309", // amber-700
+          "circle-stroke-width": 2,
           "circle-stroke-color": "#fff",
         },
       });
@@ -228,7 +228,10 @@ const Map = () => {
     const coordinates = currentItem.geometry.coordinates.slice();
 
     //mapbox popup offset to center on custom marker - https://docs.mapbox.com/mapbox-gl-js/api/markers/#popup
-    const popup = new mapboxgl.Popup({ offset: [0, -10] })
+    const popup = new mapboxgl.Popup({
+      offset: [0, -10],
+      className: "mapbox-popup-custom",
+    })
       .setLngLat(coordinates)
       .setDOMContent(popUpElement.current)
       .addTo(map.current);
@@ -273,7 +276,7 @@ const Map = () => {
         />
         <section
           ref={mapContainer}
-          className='w-full h-[70vh] md:h-full grow'
+          className='w-full h-[70vh] md:h-full grow rounded-lg border border-stone-100 overflow-hidden'
         />
       </div>
       <div ref={popUpElement}>
