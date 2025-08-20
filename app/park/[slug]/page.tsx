@@ -44,26 +44,10 @@ export default function ParkPage({
   }
 
   return (
-    <div>
+    <>
       <Link href='/'>Back to Map</Link>
       {parkData?.data.map((location: any, index: any) => (
         <div key={index}>
-          <div className='flex overflow-x-auto overflow-y-hidden w-full snap-x'>
-            {location.images.map((image, index) => (
-              <div key={index} className='w-2/3 shrink-0 aspect-video group'>
-                <figure className='relative h-full'>
-                  <img
-                    src={image.url}
-                    alt={image.altText}
-                    className='object-cover w-full h-full'
-                  />
-                  <figcaption className='absolute bottom-0 px-3 py-2 w-full text-white transition-transform duration-300 ease-in-out translate-y-full bg-zinc-900/70 group-hover:translate-y-0'>
-                    {image.caption}
-                  </figcaption>
-                </figure>
-              </div>
-            ))}
-          </div>
           <div key={location.id} className='grid grid-cols-3 gap-8 px-6 py-8'>
             <div className='md:col-span-2'>
               <h1 className='text-4xl'>{location.fullName}</h1>
@@ -87,7 +71,22 @@ export default function ParkPage({
                 </div>
               )}
 
-              <h2 className='mt-4 text-xl font-bold text-zinc-900'>
+              <div className='grid grid-cols-1 md:grid-cols-3'>
+                {location.images.map((image, index) => (
+                  <figure key={index} className='flex flex-col'>
+                    <img
+                      src={image.url}
+                      alt={image.altText}
+                      className='object-cover w-auto h-full max-h-80'
+                    />
+                    <figcaption className='px-3 py-2 w-full text-xs text-white bg-zinc-900/70'>
+                      {image.caption}
+                    </figcaption>
+                  </figure>
+                ))}
+              </div>
+
+              <h2 className='mt-4 text-xl font-bold text-white'>
                 Weather Info
               </h2>
               <div className='mt-2'>
@@ -149,6 +148,6 @@ export default function ParkPage({
           </div>
         </div>
       ))}
-    </div>
+    </>
   );
 }
