@@ -10,13 +10,79 @@ import ThingsToDoData from "../../components/ThingsToDoData";
 import DataSkeleton from "../../components/DataSkeleton";
 import Image from "next/image";
 
+// Define types for the NPS API response
+interface ParkImage {
+  url: string;
+  altText: string;
+  caption: string;
+}
+
+interface EntranceFee {
+  title: string;
+  cost: string;
+  description: string;
+}
+
+interface ParkContact {
+  phoneNumbers: Array<{
+    phoneNumber: string;
+    description: string;
+    extension: string;
+    type: string;
+  }>;
+  emailAddresses: Array<{
+    emailAddress: string;
+    description: string;
+  }>;
+}
+
+interface ParkAddress {
+  line1: string;
+  line2: string;
+  line3: string;
+  city: string;
+  stateCode: string;
+  postalCode: string;
+  type: string;
+}
+
+interface OperatingHours {
+  name: string;
+  description: string;
+  standardHours: {
+    monday: string;
+    tuesday: string;
+    wednesday: string;
+    thursday: string;
+    friday: string;
+    saturday: string;
+    sunday: string;
+  };
+}
+
+interface ParkData {
+  fullName: string;
+  description: string;
+  images: ParkImage[];
+  entranceFees: EntranceFee[];
+  operatingHours: OperatingHours[];
+  weatherInfo: string;
+  contacts: ParkContact;
+  addresses: ParkAddress[];
+  url: string;
+}
+
+interface NPSResponse {
+  data: ParkData[];
+}
+
 export default function ParkPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const parkId = getLocalNPSbyName(use(params).slug);
-  const [parkData, setParkData] = useState(null);
+  const [parkData, setParkData] = useState<NPSResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   const getNPS = async (type: string, limit: number, parkId: string) => {
