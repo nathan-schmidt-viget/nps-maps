@@ -53,10 +53,12 @@ const LocationDetails = ({
               {location.images.map((image, index) => (
                 <div key={index} className='w-2/3 shrink-0 aspect-video group'>
                   <figure className='relative h-full'>
-                    <img
+                    <Image
                       src={image.url}
                       alt={image.altText}
                       className='object-cover w-full h-full'
+                      width={100}
+                      height={100}
                     />
                     <figcaption className='absolute bottom-0 px-3 py-2 w-full text-white transition-transform duration-300 ease-in-out translate-y-full bg-zinc-900/70 group-hover:translate-y-0'>
                       {image.caption}

@@ -8,6 +8,7 @@ import AlertData from "../../components/AlertData";
 import EventsData from "../../components/EventsData";
 import ThingsToDoData from "../../components/ThingsToDoData";
 import DataSkeleton from "../../components/DataSkeleton";
+import Image from "next/image";
 
 export default function ParkPage({
   params,
@@ -180,10 +181,12 @@ export default function ParkPage({
                       index: number
                     ) => (
                       <figure key={index} className='mb-4 break-inside-avoid'>
-                        <img
+                        <Image
                           src={image.url}
                           alt={image.altText}
                           className='w-full h-auto rounded-lg border transition-colors duration-300 border-stone-200 hover:border-stone-300'
+                          width={270}
+                          height={180}
                         />
                         <figcaption className='px-3 py-2 mt-1 text-sm rounded-md text-stone-600 bg-stone-100'>
                           {image.caption}
