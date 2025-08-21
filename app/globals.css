@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "mapbox-gl/dist/mapbox-gl.css";
+@import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 
 @theme {
   --animate-zoom: zoom 30s linear alternate infinite;

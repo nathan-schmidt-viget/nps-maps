@@ -3,8 +3,6 @@
 import React, { useRef, useEffect, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
-import "mapbox-gl/dist/mapbox-gl.css";
-import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 import * as turf from "@turf/turf";
 import geoJson from "../assets/nps.json";
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAP_BOX_KEY;
@@ -33,7 +31,7 @@ const Map = () => {
     setLng(data.longitude);
     setLat(data.latitude);
   };
-  getIP();
+  //getIP();
 
   //center and zoom the map to the users IP
   useEffect(() => {
