@@ -1,6 +1,6 @@
 # National Parks Map
 
-This is a simple demo to explore and test out Map Box using National Park Services Data. [View Map](https://map-location-44c956.netlify.app/)
+This is a simple demo to explore and test out Map Box using National Park Services Data. [View Map](https://nps-maps.vercel.app/)
 
 There are several things in this demo that I would suggest changing if you are going to use it for production.
 
