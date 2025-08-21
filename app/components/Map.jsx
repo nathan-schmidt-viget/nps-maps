@@ -259,16 +259,6 @@ const Map = () => {
   return (
     <>
       <div className='flex flex-wrap md:flex-nowrap overflow-hidden md:h-[70dvh] relative'>
-        <LocationButtons
-          map={map}
-          geoMap={geoMap}
-          selectedItem={selectedItem}
-          createPopUp={createPopUp}
-          flyToLocation={flyToLocation}
-          showSidebar={showSidebar}
-          setShowSidebar={setShowSidebar}
-          searchRadius={searchRadius}
-        />
         <section
           ref={mapContainer}
           className='w-full h-[70dvh] md:h-full overflow-hidden'
