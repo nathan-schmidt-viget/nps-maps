@@ -31,7 +31,7 @@ const Map = () => {
     setLng(data.longitude);
     setLat(data.latitude);
   };
-  //getIP();
+  getIP();
 
   //center and zoom the map to the users IP
   useEffect(() => {
