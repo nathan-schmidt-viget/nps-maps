@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import DataSkeleton from "./DataSkeleton";
+import Image from "next/image";
 
 export default function ThingsToDoData({ parkId }) {
   const [thingsToDoData, setThingsToDoData] = useState(null);
@@ -56,11 +57,11 @@ export default function ThingsToDoData({ parkId }) {
         <h2 className='mb-6 font-serif text-2xl text-stone-800'>
           Things To Do
         </h2>
-        <div className='text-center py-8'>
+        <div className='py-8 text-center'>
           <p className='text-stone-600'>{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className='mt-4 px-4 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-colors'
+            className='px-4 py-2 mt-4 text-sm text-white bg-amber-700 rounded-lg transition-colors hover:bg-amber-800'
           >
             Try Again
           </button>
@@ -75,7 +76,7 @@ export default function ThingsToDoData({ parkId }) {
         <h2 className='mb-6 font-serif text-2xl text-stone-800'>
           Things To Do
         </h2>
-        <div className='text-center py-8'>
+        <div className='py-8 text-center'>
           <p className='text-stone-600'>No activities available at this time</p>
         </div>
       </div>
@@ -95,10 +96,12 @@ export default function ThingsToDoData({ parkId }) {
             className='flex flex-col gap-2 items-start mb-2 rounded-lg group text-stone-600 bg-stone-100'
           >
             <div className='overflow-hidden w-full rounded-t-lg aspect-video'>
-              <img
+              <Image
                 src={thing.images[0].url}
                 alt={thing.images[0].altText}
                 className='object-cover w-full h-auto'
+                width={370}
+                height={278}
               />
             </div>
             <div className='flex flex-col gap-1 p-4'>

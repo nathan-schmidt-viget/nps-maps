@@ -29,7 +29,6 @@ export function formatPhoneNumber(phoneNumberString: string) {
 
 export function sortItems(
   searchResult: { coordinates: number[] },
-  showPopup = true,
   searchRadius = "350"
 ) {
   const sortedGeoMap = [...geoJson.features];
