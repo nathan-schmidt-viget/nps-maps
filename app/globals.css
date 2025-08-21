@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+@theme {
+  --animate-zoom: zoom 30s linear alternate infinite;
+
+  @keyframes zoom {
+    0% {
+      transform: scale(100%);
+    }
+    100% {
+      transform: scale(135%);
+    }
+  }
+}
+
 @layer components {
   .btn {
     @apply inline-block bg-sky-800 rounded text-white py-2 px-4 hover:bg-emerald-800 ease-out duration-300;
