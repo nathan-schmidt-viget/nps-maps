@@ -14,20 +14,17 @@ import LocationPopup from "./LocationPopup";
 import { sortItems, flyToLocation } from "../utils/helpers";
 
 const Map = () => {
+  const zoom = 2.5;
+  const pitch = 0;
+  const searchRadius = "350";
   const mapContainer = useRef(null);
   const map = useRef(null);
   const popUpElement = useRef(null);
   const [lng, setLng] = useState(-95);
   const [lat, setLat] = useState(39);
-  const [zoom, setZoom] = useState(2.5);
-  const [pitch, setPitch] = useState(0);
-  const [searchRadius] = useState("350");
   const [geoMap, setGeoMap] = useState(geoJson.features);
-  const [geoMapItem, setGeoMapItem] = useState({ data: [] });
   const [selectedItem, setSelectedItem] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
-  const [locationPopUp, setLocationPopUp] = useState(false);
 
   //fetch data to find the users IP and then center and zoom the map to that area
   const getIP = async () => {
@@ -36,7 +33,7 @@ const Map = () => {
     setLng(data.longitude);
     setLat(data.latitude);
   };
-  //getIP();
+  getIP();
 
   //center and zoom the map to the users IP
   useEffect(() => {
@@ -61,7 +58,7 @@ const Map = () => {
     if (map.current) return; // initialize map only once
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: "mapbox://styles/nathanschmidt3/cljho2wwr001u01p12jda5ev0",
+      style: "mapbox://styles/nathanschmidt3/cmeliv092006l01si7kdzecig",
       center: [lng, lat],
       zoom: zoom,
       pitch: pitch,
@@ -263,7 +260,7 @@ const Map = () => {
 
   return (
     <>
-      <div className='flex flex-wrap md:flex-nowrap overflow-hidden md:h-[70vh] relative'>
+      <div className='flex flex-wrap md:flex-nowrap overflow-hidden md:h-[70dvh] relative'>
         <LocationButtons
           map={map}
           geoMap={geoMap}
@@ -276,7 +273,7 @@ const Map = () => {
         />
         <section
           ref={mapContainer}
-          className='w-full h-[70vh] md:h-full grow rounded-lg border border-stone-100 overflow-hidden'
+          className='w-full h-[70dvh] md:h-full overflow-hidden'
         />
       </div>
       <div ref={popUpElement}>
