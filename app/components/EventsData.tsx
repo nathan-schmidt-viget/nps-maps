@@ -9,9 +9,7 @@ interface EventsDataProps {
   parkId: string;
 }
 
-interface EventsResponse extends NPSResponse {
-  data: EventData[];
-}
+type EventsResponse = NPSResponse<EventData>;
 
 export default function EventsData({ parkId }: EventsDataProps) {
   const [eventsData, setEventsData] = useState<EventsResponse | null>(null);

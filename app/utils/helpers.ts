@@ -74,7 +74,7 @@ export function sortItems(
 }
 
 export function flyToLocation(
-  map: React.RefObject<mapboxgl.Map>,
+  map: React.RefObject<mapboxgl.Map | null>,
   currentItem: NPSFeature
 ): void {
   map.current?.flyTo({

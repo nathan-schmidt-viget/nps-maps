@@ -9,9 +9,7 @@ interface AlertDataProps {
   parkId: string;
 }
 
-interface AlertsResponse extends NPSResponse {
-  data: AlertDataType[];
-}
+type AlertsResponse = NPSResponse<AlertDataType>;
 
 export default function AlertData({ parkId }: AlertDataProps) {
   const [alertData, setAlertData] = useState<AlertsResponse | null>(null);

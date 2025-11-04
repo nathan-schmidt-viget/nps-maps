@@ -60,8 +60,8 @@ export interface ParkData {
   url: string;
 }
 
-export interface NPSResponse {
-  data: ParkData[];
+export interface NPSResponse<T = ParkData> {
+  data: T[];
 }
 
 export interface AlertData {

@@ -252,15 +252,18 @@ const Map = () => {
         const features = map.current.queryRenderedFeatures(e.point, {
           layers: ["clusters"],
         });
-        if (!features[0]) return;
-        const clusterId = features[0].properties.cluster_id;
+        const feature = features[0];
+        if (!feature || !feature.properties) return;
+        const clusterId = feature.properties.cluster_id;
         const source = map.current.getSource(
           "points"
         ) as mapboxgl.GeoJSONSource;
         source.getClusterExpansionZoom(clusterId, (err, zoom) => {
-          if (err || !map.current) return;
+          if (err || !map.current || zoom === null || zoom === undefined)
+            return;
+          if (feature.geometry.type !== "Point") return;
 
-          const center = features[0].geometry.coordinates as [number, number];
+          const center = feature.geometry.coordinates as [number, number];
           map.current.easeTo({
             center: center,
             zoom: zoom,
@@ -284,7 +287,7 @@ const Map = () => {
         /* If it does not exist, return */
         if (!features.length) return;
 
-        const clickedPoint = features[0] as NPSFeature;
+        const clickedPoint = features[0] as unknown as NPSFeature;
 
         /* Fly to the point */
         flyToLocation(map, clickedPoint);
@@ -361,7 +364,7 @@ const Map = () => {
      */
     //set up a new geo search
     const geocoder = new MapboxGeocoder({
-      accessToken: mapboxgl.accessToken,
+      accessToken: mapboxgl.accessToken!,
       mapboxgl: mapboxgl,
       countries: "us",
       marker: false,
@@ -419,15 +422,20 @@ const Map = () => {
 
     //fit map zoom to the search location and closest location - https://turfjs.org/docs/#bbox
     if (showPopup && sortedGeoMap.length > 0) {
-      map.current.fitBounds(
-        turf.bbox(
-          turf.lineString([
-            sortedGeoMap[0].geometry.coordinates as [number, number],
-            searchResult.coordinates,
-          ])
-        ),
-        { padding: 100 }
+      const bbox = turf.bbox(
+        turf.lineString([
+          sortedGeoMap[0].geometry.coordinates as [number, number],
+          searchResult.coordinates,
+        ])
       );
+      // Extract 2D bbox [minX, minY, maxX, maxY] from potentially 3D bbox
+      const bounds: [number, number, number, number] = [
+        bbox[0],
+        bbox[1],
+        bbox[2],
+        bbox[3],
+      ];
+      map.current.fitBounds(bounds, { padding: 100 });
 
       // open popup box for the closest location
       createPopUp(sortedGeoMap[0]);

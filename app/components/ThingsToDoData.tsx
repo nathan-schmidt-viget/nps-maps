@@ -10,9 +10,7 @@ interface ThingsToDoDataProps {
   parkId: string;
 }
 
-interface ThingsToDoResponse extends NPSResponse {
-  data: ThingToDoData[];
-}
+type ThingsToDoResponse = NPSResponse<ThingToDoData>;
 
 export default function ThingsToDoData({ parkId }: ThingsToDoDataProps) {
   const [thingsToDoData, setThingsToDoData] =
