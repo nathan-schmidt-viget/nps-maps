@@ -183,7 +183,7 @@ const Map = () => {
       container: mapContainer.current,
       style:
         process.env.NEXT_PUBLIC_MAPBOX_STYLE ||
-        "mapbox://styles/mapbox/streets-v12",
+        "mapbox://styles/mapbox/outdoors-v12",
       center: [lng, lat],
       zoom: zoom,
       pitch: pitch,
