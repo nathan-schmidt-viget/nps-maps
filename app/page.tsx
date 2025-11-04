@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Image from "next/image";
 import Map from "./components/Map";
 
@@ -29,7 +30,9 @@ export default function Home() {
       </header>
 
       {/* Map Section */}
-      <Map />
+      <Suspense fallback={<div className='w-full h-[70dvh] bg-zinc-700' />}>
+        <Map />
+      </Suspense>
 
       {/* Footer */}
       <footer className='py-2 bg-zinc-800'>

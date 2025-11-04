@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import mapboxgl from "mapbox-gl";
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import * as turf from "@turf/turf";
@@ -9,9 +10,17 @@ mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAP_BOX_KEY;
 
 import LocationButtons from "./LocationButtons";
 import LocationPopup from "./LocationPopup";
-import { sortItems, flyToLocation } from "../utils/helpers";
+import {
+  sortItems,
+  flyToLocation,
+  getSlugFromName,
+  getLocalNPSbyName,
+  getLocalNPSbyCode,
+} from "../utils/helpers";
 
 const Map = () => {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const zoom = 2.5;
   const pitch = 0;
   const searchRadius = "350";
@@ -23,19 +32,121 @@ const Map = () => {
   const [geoMap, setGeoMap] = useState(geoJson.features);
   const [selectedItem, setSelectedItem] = useState(null);
   const [showSidebar, setShowSidebar] = useState(false);
+  const isRestoringFromUrl = useRef(false);
+  const isInitialized = useRef(false);
+
+  // Update URL with current map state
+  const updateURL = (parkCode, center, zoomLevel, skipPush = false) => {
+    if (isRestoringFromUrl.current) return;
+
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (parkCode) {
+      const park = getLocalNPSbyCode(parkCode);
+      if (park) {
+        const slug = getSlugFromName(park.properties.Name);
+        params.set("park", slug);
+      }
+    } else {
+      params.delete("park");
+    }
+
+    if (center && zoomLevel) {
+      params.set("lng", center[0].toFixed(6));
+      params.set("lat", center[1].toFixed(6));
+      params.set("zoom", zoomLevel.toFixed(2));
+    }
+
+    const url = params.toString() ? `/?${params.toString()}` : "/";
+
+    if (skipPush) {
+      router.replace(url, { scroll: false });
+    } else {
+      router.push(url, { scroll: false });
+    }
+  };
+
+  // Restore map state from URL
+  const restoreFromURL = () => {
+    if (!map.current || !isInitialized.current) return;
+
+    const parkSlug = searchParams.get("park");
+    const urlLng = searchParams.get("lng");
+    const urlLat = searchParams.get("lat");
+    const urlZoom = searchParams.get("zoom");
+
+    isRestoringFromUrl.current = true;
+
+    if (parkSlug) {
+      const parkCode = getLocalNPSbyName(parkSlug);
+      if (parkCode) {
+        const park = getLocalNPSbyCode(parkCode);
+        if (park) {
+          // Restore map position from URL or use park location
+          const center =
+            urlLng && urlLat
+              ? [parseFloat(urlLng), parseFloat(urlLat)]
+              : park.geometry.coordinates;
+          const zoomLevel = urlZoom ? parseFloat(urlZoom) : 8.5;
+
+          map.current.flyTo({
+            center: center,
+            zoom: zoomLevel,
+            duration: 2000,
+            essential: true,
+          });
+
+          // Show popup for the park
+          setTimeout(() => {
+            createPopUp(park);
+          }, 500);
+        }
+      }
+    } else if (urlLng && urlLat) {
+      // Restore map position without park
+      const center = [parseFloat(urlLng), parseFloat(urlLat)];
+      const zoomLevel = urlZoom ? parseFloat(urlZoom) : 5;
+
+      map.current.flyTo({
+        center: center,
+        zoom: zoomLevel,
+        duration: 2000,
+        essential: true,
+      });
+
+      filterMap(
+        {
+          coordinates: center,
+        },
+        false
+      );
+    }
+
+    setTimeout(() => {
+      isRestoringFromUrl.current = false;
+    }, 1000);
+  };
 
   //fetch data to find the users IP and then center and zoom the map to that area
   const getIP = async () => {
-    const response = await fetch("/api/getip");
-    const data = await response.json();
-    setLng(data.longitude);
-    setLat(data.latitude);
+    // Only get IP if there's no park in URL
+    if (!searchParams.get("park")) {
+      const response = await fetch("/api/getip");
+      const data = await response.json();
+      setLng(data.longitude);
+      setLat(data.latitude);
+    }
   };
-  getIP();
 
-  //center and zoom the map to the users IP
+  // Get IP on mount (only if no park in URL)
   useEffect(() => {
-    if (!map.current) return; // Don't try to fly if map isn't initialized yet
+    getIP();
+  }, []);
+
+  //center and zoom the map to the users IP (only if no park in URL)
+  useEffect(() => {
+    if (!map.current || !isInitialized.current) return;
+    if (searchParams.get("park")) return; // Don't override URL-based position
 
     map.current.flyTo({
       center: [lng, lat],
@@ -49,6 +160,7 @@ const Map = () => {
       },
       false
     );
+    updateURL(null, [lng, lat], 5, true);
   }, [lng, lat]);
 
   //Load map, add locations and set onClick
@@ -128,10 +240,16 @@ const Map = () => {
           .getClusterExpansionZoom(clusterId, (err, zoom) => {
             if (err) return;
 
+            const center = features[0].geometry.coordinates;
             map.current.easeTo({
-              center: features[0].geometry.coordinates,
+              center: center,
               zoom: zoom,
             });
+
+            // Update URL with new position
+            setTimeout(() => {
+              updateURL(null, center, zoom);
+            }, 100);
           });
       });
 
@@ -152,6 +270,13 @@ const Map = () => {
 
         /* Close all other popups and display popup for clicked item */
         createPopUp(clickedPoint);
+
+        // Update URL with selected park and position
+        setTimeout(() => {
+          const center = clickedPoint.geometry.coordinates;
+          const currentZoom = map.current.getZoom();
+          updateURL(clickedPoint.properties.Code, center, currentZoom);
+        }, 100);
       });
 
       // Change the cursor to a pointer when the mouse is over the places layer.
@@ -173,6 +298,12 @@ const Map = () => {
       map.current.on("mouseleave", "clusters", () => {
         map.current.getCanvas().style.cursor = "";
       });
+
+      // Mark map as initialized
+      isInitialized.current = true;
+
+      // Restore from URL on initial load
+      restoreFromURL();
     });
 
     /*
@@ -181,10 +312,15 @@ const Map = () => {
     const geolocate = new mapboxgl.GeolocateControl();
     map.current.addControl(geolocate);
     geolocate.on("geolocate", (event) => {
-      filterMap({
-        coordinates: [event.coords.longitude, event.coords.latitude],
-      });
+      const center = [event.coords.longitude, event.coords.latitude];
+      filterMap(
+        {
+          coordinates: center,
+        },
+        true
+      );
       setShowSidebar(true);
+      // URL will be updated by filterMap
     });
 
     /*
@@ -214,6 +350,7 @@ const Map = () => {
       //sort items from nearest to farthest distance from search location
       filterMap(event.result.geometry);
       setShowSidebar(true);
+      // URL will be updated by filterMap
     });
   });
 
@@ -221,6 +358,12 @@ const Map = () => {
     setSelectedItem(currentItem.properties.Code);
 
     const coordinates = currentItem.geometry.coordinates.slice();
+
+    // Close existing popups
+    const existingPopups = document.getElementsByClassName("mapboxgl-popup");
+    for (let i = 0; i < existingPopups.length; i++) {
+      existingPopups[i].remove();
+    }
 
     //mapbox popup offset to center on custom marker - https://docs.mapbox.com/mapbox-gl-js/api/markers/#popup
     const popup = new mapboxgl.Popup({
@@ -240,7 +383,7 @@ const Map = () => {
     setGeoMap(sortedGeoMap);
 
     //fit map zoom to the search location and closest location - https://turfjs.org/docs/#bbox
-    if (showPopup) {
+    if (showPopup && sortedGeoMap.length > 0) {
       map.current.fitBounds(
         turf.bbox(
           turf.lineString([
@@ -253,8 +396,29 @@ const Map = () => {
 
       // open popup box for the closest location
       createPopUp(sortedGeoMap[0]);
+
+      // Update URL after bounds change
+      setTimeout(() => {
+        const center = map.current.getCenter();
+        const zoom = map.current.getZoom();
+        updateURL(
+          sortedGeoMap[0].properties.Code,
+          [center.lng, center.lat],
+          zoom
+        );
+      }, 100);
     }
   };
+
+  // Handle browser back/forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      restoreFromURL();
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [searchParams]);
 
   return (
     <>

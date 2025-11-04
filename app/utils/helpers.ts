@@ -43,6 +43,13 @@ export function getLocalNPSbyName(selectedItem: string): string | undefined {
   return item?.properties.Code;
 }
 
+export function getSlugFromName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "");
+}
+
 export function formatPhoneNumber(phoneNumberString: string): string | null {
   const cleaned = ("" + phoneNumberString).replace(/\D/g, "");
   const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
