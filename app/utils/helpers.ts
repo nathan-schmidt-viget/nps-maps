@@ -1,28 +1,8 @@
 import geoJson from "../assets/nps.json";
 import * as turf from "@turf/turf";
 import mapboxgl from "mapbox-gl";
-
-// Define types for the NPS data structure
-interface NPSProperties {
-  Code: string;
-  Name: string;
-  distance?: number;
-}
-
-interface NPSFeature {
-  type: "Feature";
-  id: number;
-  properties: NPSProperties;
-  geometry: {
-    type: "Point";
-    coordinates: [number, number];
-  };
-  show?: boolean;
-}
-
-interface SearchResult {
-  coordinates: [number, number];
-}
+import { MAP_DEFAULTS } from "./constants";
+import type { NPSFeature, SearchResult } from "../types";
 
 export function getLocalNPSbyCode(
   selectedItem: string
@@ -61,7 +41,7 @@ export function formatPhoneNumber(phoneNumberString: string): string | null {
 
 export function sortItems(
   searchResult: SearchResult,
-  searchRadius = "350"
+  searchRadius: string = MAP_DEFAULTS.SEARCH_RADIUS
 ): NPSFeature[] {
   const sortedGeoMap = [...geoJson.features] as NPSFeature[];
   const options = { units: "miles" as const };

@@ -6,9 +6,6 @@ import mapboxgl from "mapbox-gl";
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import * as turf from "@turf/turf";
 import geoJson from "../assets/nps.json";
-mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAP_BOX_KEY;
-
-import LocationButtons from "./LocationButtons";
 import LocationPopup from "./LocationPopup";
 import {
   sortItems,
@@ -17,26 +14,40 @@ import {
   getLocalNPSbyName,
   getLocalNPSbyCode,
 } from "../utils/helpers";
+import { MAP_DEFAULTS } from "../utils/constants";
+import type { NPSFeature, SearchResult } from "../types";
+
+// Validate Mapbox access token
+if (!process.env.NEXT_PUBLIC_MAP_BOX_KEY) {
+  throw new Error("NEXT_PUBLIC_MAP_BOX_KEY is required");
+}
+mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAP_BOX_KEY;
 
 const Map = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const zoom = 2.5;
-  const pitch = 0;
-  const searchRadius = "350";
-  const mapContainer = useRef(null);
-  const map = useRef(null);
-  const popUpElement = useRef(null);
-  const [lng, setLng] = useState(-95);
-  const [lat, setLat] = useState(39);
-  const [geoMap, setGeoMap] = useState(geoJson.features);
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [showSidebar, setShowSidebar] = useState(false);
+  const zoom = MAP_DEFAULTS.ZOOM;
+  const pitch = MAP_DEFAULTS.PITCH;
+  const searchRadius = MAP_DEFAULTS.SEARCH_RADIUS;
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const popUpElement = useRef<HTMLDivElement>(null);
+  const [lng, setLng] = useState(MAP_DEFAULTS.DEFAULT_CENTER[0]);
+  const [lat, setLat] = useState(MAP_DEFAULTS.DEFAULT_CENTER[1]);
+  const [geoMap, setGeoMap] = useState<NPSFeature[]>(
+    geoJson.features as NPSFeature[]
+  );
+  const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const isRestoringFromUrl = useRef(false);
   const isInitialized = useRef(false);
 
   // Update URL with current map state
-  const updateURL = (parkCode, center, zoomLevel, skipPush = false) => {
+  const updateURL = (
+    parkCode: string | null,
+    center: [number, number] | null,
+    zoomLevel: number | null,
+    skipPush = false
+  ) => {
     if (isRestoringFromUrl.current) return;
 
     const params = new URLSearchParams(searchParams.toString());
@@ -83,10 +94,10 @@ const Map = () => {
         const park = getLocalNPSbyCode(parkCode);
         if (park) {
           // Restore map position from URL or use park location
-          const center =
+          const center: [number, number] =
             urlLng && urlLat
               ? [parseFloat(urlLng), parseFloat(urlLat)]
-              : park.geometry.coordinates;
+              : (park.geometry.coordinates as [number, number]);
           const zoomLevel = urlZoom ? parseFloat(urlZoom) : 8.5;
 
           map.current.flyTo({
@@ -104,7 +115,7 @@ const Map = () => {
       }
     } else if (urlLng && urlLat) {
       // Restore map position without park
-      const center = [parseFloat(urlLng), parseFloat(urlLat)];
+      const center: [number, number] = [parseFloat(urlLng), parseFloat(urlLat)];
       const zoomLevel = urlZoom ? parseFloat(urlZoom) : 5;
 
       map.current.flyTo({
@@ -141,6 +152,7 @@ const Map = () => {
   // Get IP on mount (only if no park in URL)
   useEffect(() => {
     getIP();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   //center and zoom the map to the users IP (only if no park in URL)
@@ -161,14 +173,17 @@ const Map = () => {
       false
     );
     updateURL(null, [lng, lat], 5, true);
-  }, [lng, lat]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lng, lat, searchParams]);
 
   //Load map, add locations and set onClick
   useEffect(() => {
-    if (map.current) return; // initialize map only once
+    if (map.current || !mapContainer.current) return; // initialize map only once
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: "mapbox://styles/nathanschmidt3/cmeliv092006l01si7kdzecig",
+      style:
+        process.env.NEXT_PUBLIC_MAPBOX_STYLE ||
+        "mapbox://styles/mapbox/streets-v12",
       center: [lng, lat],
       zoom: zoom,
       pitch: pitch,
@@ -176,6 +191,8 @@ const Map = () => {
     });
 
     map.current.on("load", function () {
+      if (!map.current) return;
+
       // Add points custom marker
       map.current.addSource("points", {
         type: "geojson",
@@ -231,30 +248,34 @@ const Map = () => {
 
       // inspect a cluster on click
       map.current.on("click", "clusters", (e) => {
+        if (!map.current) return;
         const features = map.current.queryRenderedFeatures(e.point, {
           layers: ["clusters"],
         });
+        if (!features[0]) return;
         const clusterId = features[0].properties.cluster_id;
-        map.current
-          .getSource("points")
-          .getClusterExpansionZoom(clusterId, (err, zoom) => {
-            if (err) return;
+        const source = map.current.getSource(
+          "points"
+        ) as mapboxgl.GeoJSONSource;
+        source.getClusterExpansionZoom(clusterId, (err, zoom) => {
+          if (err || !map.current) return;
 
-            const center = features[0].geometry.coordinates;
-            map.current.easeTo({
-              center: center,
-              zoom: zoom,
-            });
-
-            // Update URL with new position
-            setTimeout(() => {
-              updateURL(null, center, zoom);
-            }, 100);
+          const center = features[0].geometry.coordinates as [number, number];
+          map.current.easeTo({
+            center: center,
+            zoom: zoom,
           });
+
+          // Update URL with new position
+          setTimeout(() => {
+            updateURL(null, center, zoom);
+          }, 100);
+        });
       });
 
       //Check for click on point on map
       map.current.on("click", "unclustered-point", (e) => {
+        if (!map.current) return;
         /* Determine if a feature in the "locations" layer exists at that item. */
         const features = map.current.queryRenderedFeatures(e.point, {
           layers: ["unclustered-point"],
@@ -263,7 +284,7 @@ const Map = () => {
         /* If it does not exist, return */
         if (!features.length) return;
 
-        const clickedPoint = features[0];
+        const clickedPoint = features[0] as NPSFeature;
 
         /* Fly to the point */
         flyToLocation(map, clickedPoint);
@@ -273,7 +294,8 @@ const Map = () => {
 
         // Update URL with selected park and position
         setTimeout(() => {
-          const center = clickedPoint.geometry.coordinates;
+          if (!map.current) return;
+          const center = clickedPoint.geometry.coordinates as [number, number];
           const currentZoom = map.current.getZoom();
           updateURL(clickedPoint.properties.Code, center, currentZoom);
         }, 100);
@@ -281,21 +303,25 @@ const Map = () => {
 
       // Change the cursor to a pointer when the mouse is over the places layer.
       map.current.on("mouseenter", "unclustered-point", () => {
+        if (!map.current) return;
         map.current.getCanvas().style.cursor = "pointer";
       });
 
       // Change it back to a pointer when it leaves.
       map.current.on("mouseleave", "unclustered-point", () => {
+        if (!map.current) return;
         map.current.getCanvas().style.cursor = "";
       });
 
       // Change the cursor to a pointer when the mouse is over the places layer.
       map.current.on("mouseenter", "clusters", () => {
+        if (!map.current) return;
         map.current.getCanvas().style.cursor = "pointer";
       });
 
       // Change it back to a pointer when it leaves.
       map.current.on("mouseleave", "clusters", () => {
+        if (!map.current) return;
         map.current.getCanvas().style.cursor = "";
       });
 
@@ -312,14 +338,16 @@ const Map = () => {
     const geolocate = new mapboxgl.GeolocateControl();
     map.current.addControl(geolocate);
     geolocate.on("geolocate", (event) => {
-      const center = [event.coords.longitude, event.coords.latitude];
+      const center: [number, number] = [
+        event.coords.longitude,
+        event.coords.latitude,
+      ];
       filterMap(
         {
           coordinates: center,
         },
         true
       );
-      setShowSidebar(true);
       // URL will be updated by filterMap
     });
 
@@ -348,16 +376,21 @@ const Map = () => {
     //after users searches and clicks on a result
     geocoder.on("result", (event) => {
       //sort items from nearest to farthest distance from search location
-      filterMap(event.result.geometry);
-      setShowSidebar(true);
+      filterMap(event.result.geometry as SearchResult);
       // URL will be updated by filterMap
     });
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const createPopUp = (currentItem) => {
+  const createPopUp = (currentItem: NPSFeature) => {
+    if (!map.current || !popUpElement.current) return;
+
     setSelectedItem(currentItem.properties.Code);
 
-    const coordinates = currentItem.geometry.coordinates.slice();
+    const coordinates = currentItem.geometry.coordinates.slice() as [
+      number,
+      number
+    ];
 
     // Close existing popups
     const existingPopups = document.getElementsByClassName("mapboxgl-popup");
@@ -366,7 +399,7 @@ const Map = () => {
     }
 
     //mapbox popup offset to center on custom marker - https://docs.mapbox.com/mapbox-gl-js/api/markers/#popup
-    const popup = new mapboxgl.Popup({
+    new mapboxgl.Popup({
       offset: [0, -10],
       className: "mapbox-popup-custom",
     })
@@ -376,8 +409,10 @@ const Map = () => {
   };
 
   //only used if we show the full list of locations
-  const filterMap = (searchResult, showPopup = true) => {
-    const sortedGeoMap = sortItems(searchResult, showPopup, searchRadius);
+  const filterMap = (searchResult: SearchResult, showPopup = true) => {
+    if (!map.current) return;
+
+    const sortedGeoMap = sortItems(searchResult, searchRadius);
 
     //set the sorted array to the geoMap
     setGeoMap(sortedGeoMap);
@@ -387,7 +422,7 @@ const Map = () => {
       map.current.fitBounds(
         turf.bbox(
           turf.lineString([
-            sortedGeoMap[0].geometry.coordinates,
+            sortedGeoMap[0].geometry.coordinates as [number, number],
             searchResult.coordinates,
           ])
         ),
@@ -399,6 +434,7 @@ const Map = () => {
 
       // Update URL after bounds change
       setTimeout(() => {
+        if (!map.current) return;
         const center = map.current.getCenter();
         const zoom = map.current.getZoom();
         updateURL(
@@ -418,6 +454,7 @@ const Map = () => {
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   return (

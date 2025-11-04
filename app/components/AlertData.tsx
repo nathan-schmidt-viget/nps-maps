@@ -2,29 +2,21 @@
 
 import { useEffect, useState } from "react";
 import DataSkeleton from "./DataSkeleton";
+import { fetchNPSData } from "../utils/npsApi";
+import type { AlertData as AlertDataType, NPSResponse } from "../types";
 
-export default function AlertData({ parkId }) {
-  const [alertData, setAlertData] = useState(null);
+interface AlertDataProps {
+  parkId: string;
+}
+
+interface AlertsResponse extends NPSResponse {
+  data: AlertDataType[];
+}
+
+export default function AlertData({ parkId }: AlertDataProps) {
+  const [alertData, setAlertData] = useState<AlertsResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const getNPS = async (type, limit, parkId) => {
-    try {
-      const response = await fetch("/api/nps", {
-        method: "POST",
-        body: JSON.stringify({
-          type: type,
-          limit: limit,
-          selectedItem: parkId,
-        }),
-      });
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Error fetching alert data:", error);
-      throw error;
-    }
-  };
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchAlertData = async () => {
@@ -33,8 +25,8 @@ export default function AlertData({ parkId }) {
       try {
         setLoading(true);
         setError(null);
-        const alerts = await getNPS("alerts", 10, parkId);
-        setAlertData(alerts);
+        const alerts = await fetchNPSData("alerts", 10, parkId);
+        setAlertData(alerts as AlertsResponse);
       } catch (err) {
         setError("Failed to load alerts");
         console.error("Error fetching alerts:", err);

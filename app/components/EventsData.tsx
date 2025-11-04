@@ -2,29 +2,21 @@
 
 import { useEffect, useState } from "react";
 import DataSkeleton from "./DataSkeleton";
+import { fetchNPSData } from "../utils/npsApi";
+import type { EventData, NPSResponse } from "../types";
 
-export default function EventsData({ parkId }) {
-  const [eventsData, setEventsData] = useState(null);
+interface EventsDataProps {
+  parkId: string;
+}
+
+interface EventsResponse extends NPSResponse {
+  data: EventData[];
+}
+
+export default function EventsData({ parkId }: EventsDataProps) {
+  const [eventsData, setEventsData] = useState<EventsResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const getNPS = async (type, limit, parkId) => {
-    try {
-      const response = await fetch("/api/nps", {
-        method: "POST",
-        body: JSON.stringify({
-          type: type,
-          limit: limit,
-          selectedItem: parkId,
-        }),
-      });
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Error fetching events data:", error);
-      throw error;
-    }
-  };
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchEventsData = async () => {
@@ -33,8 +25,8 @@ export default function EventsData({ parkId }) {
       try {
         setLoading(true);
         setError(null);
-        const events = await getNPS("events", 50, parkId);
-        setEventsData(events);
+        const events = await fetchNPSData("events", 50, parkId);
+        setEventsData(events as EventsResponse);
       } catch (err) {
         setError("Failed to load events");
         console.error("Error fetching events:", err);
