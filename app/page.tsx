@@ -1,9 +1,10 @@
+import { Suspense } from "react";
 import Image from "next/image";
 import Map from "./components/Map";
 
 export default function Home() {
   return (
-    <div className='min-h-screen bg-stone-50'>
+    <div className='min-h-screen bg-zinc-800'>
       {/* Header Section */}
       <header className='relative mx-auto max-w-[1600px] bg-zinc-800'>
         <div className='overflow-hidden relative h-[50dvh] max-h-[800px]'>
@@ -29,7 +30,9 @@ export default function Home() {
       </header>
 
       {/* Map Section */}
-      <Map />
+      <Suspense fallback={<div className='w-full h-[70dvh] bg-zinc-700' />}>
+        <Map />
+      </Suspense>
 
       {/* Footer */}
       <footer className='py-2 bg-zinc-800'>

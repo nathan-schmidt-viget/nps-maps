@@ -3,29 +3,20 @@
 import { useEffect, useState } from "react";
 import DataSkeleton from "./DataSkeleton";
 import Image from "next/image";
+import { fetchNPSData } from "../utils/npsApi";
+import type { ThingToDoData, NPSResponse } from "../types";
 
-export default function ThingsToDoData({ parkId }) {
-  const [thingsToDoData, setThingsToDoData] = useState(null);
+interface ThingsToDoDataProps {
+  parkId: string;
+}
+
+type ThingsToDoResponse = NPSResponse<ThingToDoData>;
+
+export default function ThingsToDoData({ parkId }: ThingsToDoDataProps) {
+  const [thingsToDoData, setThingsToDoData] =
+    useState<ThingsToDoResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const getNPS = async (type, limit, parkId) => {
-    try {
-      const response = await fetch("/api/nps", {
-        method: "POST",
-        body: JSON.stringify({
-          type: type,
-          limit: limit,
-          selectedItem: parkId,
-        }),
-      });
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Error fetching things to do data:", error);
-      throw error;
-    }
-  };
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchThingsToDoData = async () => {
@@ -34,8 +25,8 @@ export default function ThingsToDoData({ parkId }) {
       try {
         setLoading(true);
         setError(null);
-        const thingsToDo = await getNPS("thingstodo", 4, parkId);
-        setThingsToDoData(thingsToDo);
+        const thingsToDo = await fetchNPSData("thingstodo", 4, parkId);
+        setThingsToDoData(thingsToDo as ThingsToDoResponse);
       } catch (err) {
         setError("Failed to load things to do");
         console.error("Error fetching things to do:", err);

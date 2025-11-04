@@ -4,101 +4,31 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLocalNPSbyName, formatPhoneNumber } from "../../utils/helpers";
+import { fetchNPSData } from "../../utils/npsApi";
 import AlertData from "../../components/AlertData";
 import EventsData from "../../components/EventsData";
 import ThingsToDoData from "../../components/ThingsToDoData";
 import DataSkeleton from "../../components/DataSkeleton";
 import Image from "next/image";
-
-// Define types for the NPS API response
-interface ParkImage {
-  url: string;
-  altText: string;
-  caption: string;
-}
-
-interface EntranceFee {
-  title: string;
-  cost: string;
-  description: string;
-}
-
-interface ParkContact {
-  phoneNumbers: Array<{
-    phoneNumber: string;
-    description: string;
-    extension: string;
-    type: string;
-  }>;
-  emailAddresses: Array<{
-    emailAddress: string;
-    description: string;
-  }>;
-}
-
-interface ParkAddress {
-  line1: string;
-  line2: string;
-  line3: string;
-  city: string;
-  stateCode: string;
-  postalCode: string;
-  type: string;
-}
-
-interface OperatingHours {
-  name: string;
-  description: string;
-  standardHours: {
-    monday: string;
-    tuesday: string;
-    wednesday: string;
-    thursday: string;
-    friday: string;
-    saturday: string;
-    sunday: string;
-  };
-}
-
-interface ParkData {
-  fullName: string;
-  description: string;
-  images: ParkImage[];
-  entranceFees: EntranceFee[];
-  operatingHours: OperatingHours[];
-  weatherInfo: string;
-  contacts: ParkContact;
-  addresses: ParkAddress[];
-  url: string;
-}
-
-interface NPSResponse {
-  data: ParkData[];
-}
+import type { NPSResponse, ParkImage, EntranceFee } from "../../types";
 
 export default function ParkPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const parkId = getLocalNPSbyName(use(params).slug);
+  const slug = use(params).slug;
+  const parkId = getLocalNPSbyName(slug);
   const [parkData, setParkData] = useState<NPSResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   const getNPS = async (type: string, limit: number, parkId: string) => {
     try {
-      const response = await fetch("/api/nps", {
-        method: "POST",
-        body: JSON.stringify({
-          type: type,
-          limit: limit,
-          selectedItem: parkId,
-        }),
-      });
-      const data = await response.json();
+      const data = await fetchNPSData(type, limit, parkId);
       return data;
     } catch (error) {
       console.error("Error fetching park data:", error);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -127,7 +57,7 @@ export default function ParkPage({
           <div className='px-4 mx-auto max-w-7xl sm:px-6 lg:px-8'>
             <div className='flex items-center py-4 space-x-2'>
               <Link
-                href='/'
+                href={`/?park=${slug}`}
                 className='font-medium text-amber-700 transition-colors duration-200 hover:text-amber-800'
               >
                 Map
@@ -201,7 +131,7 @@ export default function ParkPage({
         <div className='px-4 mx-auto max-w-7xl sm:px-6 lg:px-8'>
           <div className='flex items-center py-4 space-x-2'>
             <Link
-              href='/'
+              href={`/?park=${slug}`}
               className='font-medium text-amber-700 transition-colors duration-200 hover:text-amber-800'
             >
               Map
@@ -241,25 +171,20 @@ export default function ParkPage({
                   Gallery
                 </h2>
                 <div className='gap-4 space-y-4 columns-1 md:columns-2 lg:columns-3'>
-                  {location.images.map(
-                    (
-                      image: { url: string; altText: string; caption: string },
-                      index: number
-                    ) => (
-                      <figure key={index} className='mb-4 break-inside-avoid'>
-                        <Image
-                          src={image.url}
-                          alt={image.altText}
-                          className='w-full h-auto rounded-lg border transition-colors duration-300 border-stone-200 hover:border-stone-300'
-                          width={270}
-                          height={180}
-                        />
-                        <figcaption className='px-3 py-2 mt-1 text-sm rounded-md text-stone-600 bg-stone-100'>
-                          {image.caption}
-                        </figcaption>
-                      </figure>
-                    )
-                  )}
+                  {location.images.map((image: ParkImage, index: number) => (
+                    <figure key={index} className='mb-4 break-inside-avoid'>
+                      <Image
+                        src={image.url}
+                        alt={image.altText}
+                        className='w-full h-auto rounded-lg border transition-colors duration-300 border-stone-200 hover:border-stone-300'
+                        width={270}
+                        height={180}
+                      />
+                      <figcaption className='px-3 py-2 mt-1 text-sm rounded-md text-stone-600 bg-stone-100'>
+                        {image.caption}
+                      </figcaption>
+                    </figure>
+                  ))}
                 </div>
               </div>
 
@@ -271,14 +196,7 @@ export default function ParkPage({
                   </h2>
                   <div className='space-y-4'>
                     {location.entranceFees.map(
-                      (
-                        fee: {
-                          title: string;
-                          cost: string;
-                          description: string;
-                        },
-                        index: number
-                      ) => (
+                      (fee: EntranceFee, index: number) => (
                         <div
                           key={index}
                           className='pl-4 border-l-4 border-amber-600'
@@ -357,7 +275,10 @@ export default function ParkPage({
                   <div className='space-y-2'>
                     {location.contacts.phoneNumbers.map(
                       (
-                        phone: { type: string; phoneNumber: string },
+                        phone: {
+                          type: string;
+                          phoneNumber: string;
+                        },
                         index: number
                       ) => (
                         <div key={index} className='text-sm'>

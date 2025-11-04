@@ -1,8 +1,14 @@
+interface DataSkeletonProps {
+  title: string;
+  itemCount?: number;
+  variant?: "list" | "grid" | "cards";
+}
+
 export default function DataSkeleton({
   title,
   itemCount = 3,
   variant = "list",
-}) {
+}: DataSkeletonProps) {
   const renderSkeletonItems = () => {
     switch (variant) {
       case "grid":
