@@ -81,7 +81,8 @@ export default function ParkPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const parkId = getLocalNPSbyName(use(params).slug);
+  const slug = use(params).slug;
+  const parkId = getLocalNPSbyName(slug);
   const [parkData, setParkData] = useState<NPSResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -127,7 +128,7 @@ export default function ParkPage({
           <div className='px-4 mx-auto max-w-7xl sm:px-6 lg:px-8'>
             <div className='flex items-center py-4 space-x-2'>
               <Link
-                href='/'
+                href={`/?park=${slug}`}
                 className='font-medium text-amber-700 transition-colors duration-200 hover:text-amber-800'
               >
                 Map
@@ -201,7 +202,7 @@ export default function ParkPage({
         <div className='px-4 mx-auto max-w-7xl sm:px-6 lg:px-8'>
           <div className='flex items-center py-4 space-x-2'>
             <Link
-              href='/'
+              href={`/?park=${slug}`}
               className='font-medium text-amber-700 transition-colors duration-200 hover:text-amber-800'
             >
               Map
