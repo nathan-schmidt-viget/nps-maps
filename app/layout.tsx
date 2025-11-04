@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,7 +15,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "National Park Service Locations",
-  description: "Explore National Park Service locations across the United States with an interactive map.",
+  description:
+    "Explore National Park Service locations across the United States with an interactive map.",
 };
 
 export default function RootLayout({
@@ -27,9 +29,8 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-stone-50`}
       >
-        <main className='min-h-screen'>
-          {children}
-        </main>
+        <main className='min-h-screen'>{children}</main>
+        <Analytics />
       </body>
     </html>
   );
